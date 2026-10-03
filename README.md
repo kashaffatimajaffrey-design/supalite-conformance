@@ -10,6 +10,27 @@ Differential conformance tests: the same supabase-js calls against Supabase (Pos
 
 The [report](https://kashaffatimajaffrey-design.github.io/supalite-conformance/) always shows the latest run on the default branch, with the versions it tested. Every run is listed under [Actions → conformance](https://github.com/kashaffatimajaffrey-design/supalite-conformance/actions/workflows/conformance.yml), and each run's job summary has the same table.
 
+Snapshot from [CI run #6](https://github.com/kashaffatimajaffrey-design/supalite-conformance/actions/runs/37119461161) (Lite `bf041d0`, supabase-js 2.117.2, Supabase CLI 2.119.0), 81 cases:
+
+| pass | S1 | S2 | S3 | bug | S4 |
+|---:|---:|---:|---:|---:|---:|
+| 33 | 15 | 12 | 10 | 7 | 4 |
+
+The 48 failing cases trace to **22 distinct root causes**. The ones behind S1 (silent wrong data):
+
+| Root cause | Postgres | Lite | Cases |
+|---|---|---|---|
+| Values not checked against column types | 400 `22P02` / `22008` / `22001`; parses `"yes"` as `true` | `200 []` on bad filter input; stores `"abc"` in an integer column, `2024-02-30`, over-length varchar, `"yes"` in a boolean | 6 |
+| Booleans stored as 0/1 | `eq('active', true)` → 6 rows | `[]` | 1 S1 (+ S2, bug) |
+| RLS WITH CHECK violation reported as success | 401/403 `42501` | `201 []`; Lite inserts, checks, deletes. A read-back by the owner confirms the row is not kept | 2 |
+| `Prefer` ignored on writes | `delete({count:'exact'})` → `count: 2` | `count: null`, rows returned | 1 S1 (+ S2) |
+| NULL sort position | NULLs last (asc) / first (desc) | the opposite | 2 |
+| Byte-order collation | alice, Alice, ALICE, … | ALICE, Alice, …, alice | 1 |
+| LIKE case-insensitive | `like 'Al%'` → Alice | Alice, alice, ALICE | 1 |
+| ILIKE folds only ASCII | `ilike 'émile'` → Émile, émile | émile | 1 |
+
+Loud bugs (errors on features Lite does not declare unsupported): two-level embedding (`no such column: posts.id`, although Lite's README lists it), `!inner` read as a foreign-key name, `->>` and `::` casts in select, and writing a JS boolean. Declared gaps (S4): full-text search, `cs`, upsert, refresh-token grant. The report has every case and root cause.
+
 ## What it is
 
 A test suite that sends the same supabase-js call to two backends, compares the two answers, and reports every difference.
