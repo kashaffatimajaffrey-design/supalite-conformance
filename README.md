@@ -4,6 +4,8 @@
 
 Differential conformance tests: the same supabase-js calls against Supabase (Postgres) and Supabase Lite (SQLite), with every difference classified by severity.
 
+By [Kashaf Fatima](https://github.com/kashaffatimajaffrey-design).
+
 **Report:** https://kashaffatimajaffrey-design.github.io/supalite-conformance/ (published by CI to GitHub Pages)
 
 ## Latest results
@@ -175,9 +177,11 @@ fixtures/
   gen-seed.ts                    seed.json → INSERTs for both databases
 supabase/                        created by `supabase init`; migration and seed.sql are generated
 src/
-  defineCase.ts  runner.ts  normalize.ts  classify.ts  classify.test.ts
+  defineCase.ts  runner.ts  normalize.ts  classify.ts
+  normalize.test.ts  classify.test.ts   unit tests for the kit itself
   report/build.ts  report/template.html
 cases/01-filters.ts … 09-upgrade.ts
+cases/_rootCauses.ts             root-cause list the report groups failures by
 docs/postgres-vs-sqlite.md       one-page gap write-up
 ```
 
@@ -190,6 +194,16 @@ docs/postgres-vs-sqlite.md       one-page gap write-up
 
 See [`docs/postgres-vs-sqlite.md`](docs/postgres-vs-sqlite.md) for the underlying Postgres vs SQLite differences.
 
+## Upstream
+
+No issue or pull request has been filed with supabase-lite yet. They will be linked here once filed.
+
+## Credits
+
+- Target: [olirice/supabase-lite](https://github.com/olirice/supabase-lite) by Oliver Rice (MIT, per its `package.json`).
+- Reference behavior: [Supabase](https://github.com/supabase/supabase), [supabase-js](https://github.com/supabase/supabase-js), the [PostgREST docs](https://docs.postgrest.org) and the [PostgreSQL docs](https://www.postgresql.org/docs/).
+- Built by Kashaf Fatima with [Claude Code](https://claude.com/claude-code).
+
 ## License
 
-MIT
+[MIT](LICENSE) © 2026 Kashaf Fatima
