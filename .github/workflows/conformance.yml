@@ -50,9 +50,7 @@ jobs:
         timeout-minutes: 10
         run: |
           supabase start -x studio,storage-api,realtime,edge-runtime,logflare,vector,imgproxy,postgres-meta
-          eval "$(supabase status -o env)"
-          echo "REFERENCE_URL=$API_URL" >> "$GITHUB_ENV"
-          echo "REFERENCE_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+          npm run env   # writes .env from `supabase status`, same as on a laptop
 
       - name: Start target (Supabase Lite on :54400)
         run: |

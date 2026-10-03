@@ -12,6 +12,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isMain } from '../src/isMain.ts';
 
 type Value = null | boolean | number | string | Value[] | { [k: string]: Value };
 type Row = Record<string, Value>;
@@ -93,7 +94,7 @@ export function generatedFiles(): Record<string, string> {
   };
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (isMain(import.meta.url)) {
   const check = process.argv.includes('--check');
   let stale = 0;
   for (const [path, body] of Object.entries(generatedFiles())) {

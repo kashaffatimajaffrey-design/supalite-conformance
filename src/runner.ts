@@ -16,6 +16,7 @@ import { registeredCases, type Case, type CaseContext } from './defineCase.ts';
 import { diff, normalize, normalizeThrown, type Difference, type Json, type Outcome } from './normalize.ts';
 import { classify, SEVERITY, type Severity, type Verdict } from './classify.ts';
 import { ROOT_CAUSES, type RootCause } from '../cases/_rootCauses.ts';
+import { isMain } from './isMain.ts';
 
 const root = (p: string) => fileURLToPath(new URL(`../${p}`, import.meta.url));
 const CALL_TIMEOUT_MS = 20_000;
@@ -275,6 +276,6 @@ export function summaryMarkdown(r: Results): string {
   return lines.join('\n');
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (isMain(import.meta.url)) {
   await main();
 }

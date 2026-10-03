@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { LITE_JWT_SECRET, LITE_PORT, signAnonKey } from './config.ts';
 import { insertsFor, seed } from '../fixtures/gen-seed.ts';
 import { litePolicies } from '../fixtures/policies.lite.ts';
+import { isMain } from '../src/isMain.ts';
 
 const LITE = new URL('./supabase-lite/', import.meta.url);
 const liteRequire = createRequire(new URL('package.json', LITE));
@@ -58,7 +59,7 @@ export async function bootLite(port = LITE_PORT) {
   return { server, db, anonKey, url: `http://127.0.0.1:${port}` };
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (isMain(import.meta.url)) {
   const { url, anonKey } = await bootLite();
   const commit = (() => {
     try {

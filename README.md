@@ -131,7 +131,7 @@ npm ci
 npm run setup:lite                 # installs Lite's pinned dependencies inside the submodule
 
 npx supabase start                 # reference: applies supabase/migrations + supabase/seed.sql
-npx supabase status -o env         # copy API_URL and ANON_KEY into .env (see .env.example)
+npm run env                        # writes .env with the reference URL and key from `supabase status`
 
 npm run lite                       # target: Lite on http://127.0.0.1:54400 (leave running)
 npm run conformance                # in a second terminal: prints a pass/S1–S4 table

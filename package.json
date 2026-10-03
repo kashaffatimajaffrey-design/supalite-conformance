@@ -9,8 +9,9 @@
     "node": ">=20"
   },
   "scripts": {
-    "setup:lite": "cp targets/supabase-lite.package-lock.json targets/supabase-lite/package-lock.json && npm ci --prefix targets/supabase-lite --no-audit --no-fund",
+    "setup:lite": "node -e \"require('fs').copyFileSync('targets/supabase-lite.package-lock.json','targets/supabase-lite/package-lock.json')\" && npm ci --prefix targets/supabase-lite --no-audit --no-fund",
     "seed": "tsx fixtures/gen-seed.ts",
+    "env": "tsx scripts/write-env.ts",
     "lite": "tsx targets/lite-boot.ts",
     "conformance": "tsx src/runner.ts",
     "report": "tsx src/report/build.ts",
