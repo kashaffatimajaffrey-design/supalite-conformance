@@ -28,8 +28,8 @@ SQLite has five storage classes (NULL, INTEGER, REAL, TEXT, BLOB) and *type affi
 
 | Postgres type | What SQLite stores | Visible effect |
 |---|---|---|
-| `boolean` | INTEGER 0/1 | JSON `1`/`0` instead of `true`/`false` (**S2**); `eq.true` compares against the text `'true'` (**S1**); JS booleans may not bind at all (**S4**) |
-| `timestamptz` | TEXT as written | no normalization to UTC ISO 8601: `2024-01-15T15:30:00+05:00` comes back as written, not as `2024-01-15T10:30:00+00:00` (**S2**); sorting by text is wrong across time zones (**S1**) |
+| `boolean` | INTEGER 0/1 | JSON `1`/`0` instead of `true`/`false` (**S2**); `eq.true` matches no rows (**S1**); writing a JS boolean fails to bind (**S4**) |
+| `timestamptz` | TEXT as written | no normalization to UTC ISO 8601: `2024-01-15T15:30:00+05:00` comes back as written, not as `2024-01-15T10:30:00+00:00` (**S2**); sorting the text across time zones can give the wrong order |
 | `numeric(p,s)` | INTEGER or REAL | scale is lost; values beyond 2^53 lose precision |
 | `jsonb` | TEXT | needs parsing on read; no `@>`, `->`, `->>` operators unless emulated with `json_extract` |
 | `date` | TEXT | invalid dates such as `2024-02-30` are accepted |
