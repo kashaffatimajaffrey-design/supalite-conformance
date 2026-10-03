@@ -1,0 +1,47 @@
+{
+  "$comment": "Single source of truth for test data. gen-seed.ts turns this into INSERTs for Postgres and SQLite. Values are picked because the two databases treat them differently.",
+  "users": [
+    { "id": "11111111-1111-4111-8111-111111111111", "email": "alice@example.com", "password": "password123" },
+    { "id": "22222222-2222-4222-8222-222222222222", "email": "bob@example.com", "password": "password123" }
+  ],
+  "tables": {
+    "people": [
+      { "id": 1,  "name": "Alice",      "nickname": "Al",          "score": 10,   "rating": 4.5,  "active": true,  "born": "1990-01-15", "created_at": "2024-01-15T10:30:00+00:00", "meta": { "team": "red", "level": 3 } },
+      { "id": 2,  "name": "alice",      "nickname": null,          "score": null, "rating": 3.25, "active": false, "born": "1991-02-20", "created_at": "2024-01-15T15:30:00+05:00", "meta": { "team": "blue" } },
+      { "id": 3,  "name": "ALICE",      "nickname": "AL",          "score": 7,    "rating": null, "active": true,  "born": null,         "created_at": "2024-02-01T00:00:00Z",      "meta": null },
+      { "id": 4,  "name": "Bob",        "nickname": "Bobby",       "score": 5,    "rating": 2,    "active": true,  "born": "1985-12-31", "created_at": "2024-03-10 08:00:00+00",    "meta": { "team": "red", "tags": ["a", "b"] } },
+      { "id": 5,  "name": "Émile",      "nickname": "Em",          "score": 12,   "rating": 4.75, "active": false, "born": "1979-07-04", "created_at": "2024-03-11T12:00:00.123456+00:00", "meta": {} },
+      { "id": 6,  "name": "émile",      "nickname": null,          "score": null, "rating": 1.1,  "active": true,  "born": null,         "created_at": "2024-03-12T12:00:00+00:00", "meta": { "team": "green" } },
+      { "id": 7,  "name": "Straße",     "nickname": "Str",         "score": 3,    "rating": 3,    "active": true,  "born": "2000-05-05", "created_at": "2024-04-01T09:15:00-07:00", "meta": { "team": "blue", "level": 1 } },
+      { "id": 8,  "name": "Carol, Jr.", "nickname": "C, J",        "score": 8,    "rating": 3.5,  "active": false, "born": "1995-09-09", "created_at": "2024-04-02T00:00:00+00:00", "meta": { "team": "red" } },
+      { "id": 9,  "name": "Dave",       "nickname": "D%_",         "score": 0,    "rating": 0,    "active": true,  "born": "1988-08-08", "created_at": "2024-05-01T23:59:59+00:00", "meta": { "level": 2 } },
+      { "id": 10, "name": "Zoë",        "nickname": "Zo",          "score": 15,   "rating": 5,    "active": false, "born": "2001-11-11", "created_at": "2024-06-30T12:00:00+00:00", "meta": { "team": "green", "level": 5 } }
+    ],
+    "authors": [
+      { "id": 1, "name": "Ada" },
+      { "id": 2, "name": "Grace" },
+      { "id": 3, "name": "Linus" }
+    ],
+    "posts": [
+      { "id": 1, "author_id": 1, "title": "Engines",          "published": true },
+      { "id": 2, "author_id": 1, "title": "Notes on Babbage", "published": false },
+      { "id": 3, "author_id": 2, "title": "Compilers",        "published": true },
+      { "id": 4, "author_id": 2, "title": "COBOL",            "published": true },
+      { "id": 5, "author_id": 3, "title": "Kernels",          "published": false }
+    ],
+    "comments": [
+      { "id": 1, "post_id": 1, "body": "Brilliant" },
+      { "id": 2, "post_id": 1, "body": "Ahead of its time" },
+      { "id": 3, "post_id": 3, "body": "Very readable" },
+      { "id": 4, "post_id": 4, "body": "Still running" },
+      { "id": 5, "post_id": 4, "body": "Legacy!" }
+    ],
+    "notes": [
+      { "id": 1, "owner_id": "11111111-1111-4111-8111-111111111111", "body": "alice public",  "is_public": true },
+      { "id": 2, "owner_id": "11111111-1111-4111-8111-111111111111", "body": "alice private", "is_public": false },
+      { "id": 3, "owner_id": "22222222-2222-4222-8222-222222222222", "body": "bob public",    "is_public": true },
+      { "id": 4, "owner_id": "22222222-2222-4222-8222-222222222222", "body": "bob private",   "is_public": false }
+    ],
+    "scratch": []
+  }
+}

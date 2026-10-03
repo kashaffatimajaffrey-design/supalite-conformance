@@ -1,0 +1,3 @@
+[submodule "targets/supabase-lite"]
+	path = targets/supabase-lite
+	url = https://github.com/olirice/supabase-lite.git
