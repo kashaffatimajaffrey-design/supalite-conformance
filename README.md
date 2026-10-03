@@ -4,7 +4,7 @@
 
 Differential conformance tests: the same supabase-js calls against Supabase (Postgres) and Supabase Lite (SQLite), with every difference classified by severity.
 
-By [Kashaf Fatima](https://github.com/kashaffatimajaffrey-design).
+By Kashaf Fatima · [GitHub](https://github.com/kashaffatimajaffrey-design) · [LinkedIn](https://www.linkedin.com/in/kashaf-fatima-jaffri67/)
 
 **Report:** https://kashaffatimajaffrey-design.github.io/supalite-conformance/ (published by CI to GitHub Pages)
 
