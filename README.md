@@ -81,6 +81,8 @@ A few probe cases (for example "is the refresh token distinct from the access to
 
 Many failing cases share one cause (0/1 booleans alone break a filter, a type check and a write). Each case names its cause from [`cases/_rootCauses.ts`](cases/_rootCauses.ts), and the report groups failing cases by cause, so it shows how many distinct problems were found, not just how many cases failed. The attribution was made by reading the pinned Lite source. It is shown only for cases that actually fail, and failing cases without one are counted as "unattributed".
 
+Root causes also link to the reference-stack code that produces the correct behavior. Those links point at the PostgREST source (Haskell, v16.4) and the GoTrue source (Go, v2.197.0), pinned to the versions `supabase start` runs. Examples: the one line that hands `like` patterns to Postgres unchanged, the SQLSTATE → HTTP status table, the 206 rule, and the refresh-token generator. [`docs/reference-sources.md`](docs/reference-sources.md) walks through each one with excerpts.
+
 ## Cases
 
 | # | Category | File | What it covers |
@@ -185,6 +187,7 @@ src/
 cases/01-filters.ts … 09-upgrade.ts
 cases/_rootCauses.ts             root-cause list the report groups failures by
 docs/postgres-vs-sqlite.md       one-page gap write-up
+docs/reference-sources.md        PostgREST (Haskell) / GoTrue (Go) code behind each root cause
 ```
 
 ## Scope
@@ -206,7 +209,7 @@ The findings went back to the project:
 ## Credits
 
 - Target: [olirice/supabase-lite](https://github.com/olirice/supabase-lite) by Oliver Rice (MIT, per its `package.json`).
-- Reference behavior: [Supabase](https://github.com/supabase/supabase), [supabase-js](https://github.com/supabase/supabase-js), the [PostgREST docs](https://docs.postgrest.org) and the [PostgreSQL docs](https://www.postgresql.org/docs/).
+- Reference behavior: [Supabase](https://github.com/supabase/supabase), [supabase-js](https://github.com/supabase/supabase-js), the [PostgREST docs](https://docs.postgrest.org) and source, the [GoTrue source](https://github.com/supabase/auth) and the [PostgreSQL docs](https://www.postgresql.org/docs/).
 - Built by Kashaf Fatima with [Claude Code](https://claude.com/claude-code).
 
 ## License

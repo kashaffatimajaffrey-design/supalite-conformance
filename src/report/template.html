@@ -123,6 +123,8 @@
   .rc { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; min-width: 0; }
   .rc h3 { margin: 0 0 4px; font-size: 14px; display: flex; gap: 8px; align-items: baseline; }
   .rc p { margin: 0 0 6px; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+  .rc .rc-ref { font-size: 12px; }
+  .rc .rc-ref a { font-family: var(--mono); font-size: 11.5px; }
   .rc .chips { display: flex; flex-wrap: wrap; gap: 4px; }
   .rc .chips a { font-family: var(--mono); font-size: 11.5px; text-decoration: none; background: var(--surface-2); border-radius: 4px; padding: 1px 6px; color: var(--text); overflow-wrap: anywhere; }
   .rc .chips a:hover { text-decoration: underline; }
@@ -154,7 +156,7 @@
 
   <section aria-label="Root causes" id="rc-section" hidden>
     <h2 class="sec" id="rc-head"></h2>
-    <p class="sec-note">Several cases can fail for the same reason, so failing cases are grouped by root cause. Attribution was made by reading the pinned Lite source; each group is ranked by its worst verdict.</p>
+    <p class="sec-note">Several cases can fail for the same reason, so failing cases are grouped by root cause. Attribution was made by reading the pinned Lite source; each group is ranked by its worst verdict. "Reference source" links point to the PostgREST (Haskell) or GoTrue (Go) code that defines the correct behavior.</p>
     <div class="rc-list" id="rc-list"></div>
   </section>
 
@@ -276,7 +278,11 @@
       list.append(el('div', { class: 'rc', id: 'rc-' + g.id },
         el('h3', {}, el('span', { class: 'badge b-' + g.worst, text: g.worst }), el('span', {}, inline(g.rc.title)),
           el('span', { class: 'rc-count', text: g.cs.length === 1 ? '1 case' : `${g.cs.length} cases` })),
-        el('p', {}, inline(g.rc.detail)), chips));
+        el('p', {}, inline(g.rc.detail)),
+        (g.rc.reference && g.rc.reference.length)
+          ? el('p', { class: 'rc-ref' }, 'Reference source: ', ...g.rc.reference.flatMap((r, i) => [i ? ' · ' : '', el('a', { href: r.url, rel: 'noopener', text: r.label })]))
+          : null,
+        chips));
     }
   }
 
