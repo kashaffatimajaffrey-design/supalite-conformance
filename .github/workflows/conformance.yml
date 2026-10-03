@@ -6,6 +6,15 @@ on:
   schedule:
     - cron: '17 6 * * 1' # weekly, Monday 06:17 UTC
   workflow_dispatch:
+    inputs:
+      lite_repo:
+        description: 'Test a different supabase-lite, e.g. a fork with a fix (owner/repo). Leave empty for the pinned upstream.'
+        required: false
+        default: ''
+      lite_ref:
+        description: 'Branch, tag or commit in that repo. Runs with this set do not publish the report.'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -34,6 +43,17 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Use a different Lite (only when lite_ref is given)
+        if: inputs.lite_ref != ''
+        env:
+          LITE_REPO: ${{ inputs.lite_repo || 'olirice/supabase-lite' }}
+          LITE_REF: ${{ inputs.lite_ref }}
+        run: |
+          git -C targets/supabase-lite fetch "https://github.com/$LITE_REPO.git" "$LITE_REF"
+          git -C targets/supabase-lite checkout --detach FETCH_HEAD
+          echo "LITE_REPO=$LITE_REPO" >> "$GITHUB_ENV"
+          git -C targets/supabase-lite log -1 --format='Testing %h %s'
 
       - name: Install kit and Lite
         run: |
@@ -82,13 +102,13 @@ jobs:
           if-no-files-found: ignore
 
       - uses: actions/upload-pages-artifact@v3
-        if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
+        if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch && inputs.lite_ref == ''
         with:
           path: site
 
   deploy-pages:
     needs: conformance
-    if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
+    if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch && inputs.lite_ref == ''
     runs-on: ubuntu-latest
     # Requires Settings → Pages → Source: "GitHub Actions". Until that is set, this job
     # fails without failing the workflow.

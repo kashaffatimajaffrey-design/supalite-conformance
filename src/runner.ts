@@ -123,6 +123,7 @@ function versions(): Record<string, string> {
     }
   };
   return {
+    'supabase-lite repo': process.env.LITE_REPO ?? 'olirice/supabase-lite',
     'supabase-lite commit': process.env.LITE_COMMIT ?? sh('git -C targets/supabase-lite rev-parse HEAD'),
     '@supabase/supabase-js': pkg('node_modules/@supabase/supabase-js/package.json'),
     'supabase CLI': process.env.SUPABASE_CLI_VERSION ?? sh('npx --no-install supabase --version'),

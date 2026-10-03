@@ -159,6 +159,8 @@ The report header shows the versions tested (Lite commit, supabase-js, Supabase 
 
 To turn on Pages once: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 
+**Testing a fix to Lite.** Actions → conformance → Run workflow, then fill in `lite_repo` (for example `your-name/supabase-lite`) and `lite_ref` (a branch or commit). The run tests that version instead of the pinned one, and its job summary shows the new counts. These runs never publish the report, which always shows the pinned upstream.
+
 Differences do not fail the build; they are the output. The build fails only if the kit itself is broken (a case throws on the reference side) or a check fails (stale seed, unit tests, types).
 
 ## Repository layout
