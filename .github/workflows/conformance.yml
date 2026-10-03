@@ -68,6 +68,9 @@ jobs:
           test -f results/results.json || exit 0
           npm run report
           cat results/summary.md >> "$GITHUB_STEP_SUMMARY"
+          echo "::group::Per-case outputs (reference vs target)"
+          node -e 'for (const c of require("./results/results.json").cases) console.log(c.verdict.padEnd(5), c.id, "\n  REF", JSON.stringify(c.reference), "\n  TGT", JSON.stringify(c.target))'
+          echo "::endgroup::"
 
       - uses: actions/upload-artifact@v4
         if: always()

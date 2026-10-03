@@ -8,6 +8,7 @@ defineCase({
   category: 'auth',
   why: 'signUp returns a session and a user with the GoTrue field set.',
   docs: DOCS.auth,
+  severity: 'S2', // a shape comparison: any difference is a shape difference
   run: async (sb, ctx) => {
     const { data, error } = await sb.auth.signUp({ email: `shape-${ctx.runId}@example.com`, password: 'password123' });
     return { data: { session: shape(data.session), user: shape(data.user) }, error };
