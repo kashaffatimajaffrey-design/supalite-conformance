@@ -198,7 +198,10 @@ See [`docs/postgres-vs-sqlite.md`](docs/postgres-vs-sqlite.md) for the underlyin
 
 ## Upstream
 
-No issue or pull request has been filed with supabase-lite yet. They will be linked here once filed.
+The findings went back to the project:
+
+- **Issue** [olirice/supabase-lite#2](https://github.com/olirice/supabase-lite/issues/2): every silent-wrong-data difference, with the call, both results, and where it comes from in Lite's code.
+- **Pull request** [olirice/supabase-lite#1](https://github.com/olirice/supabase-lite/pull/1): makes `like` case-sensitive and NULL ordering match Postgres. Run against that branch, this kit goes from 33 to 36 passing cases and from 15 to 12 S1 findings, with no other change ([run](https://github.com/kashaffatimajaffrey-design/supalite-conformance/actions/runs/37139264354)).
 
 ## Credits
 
