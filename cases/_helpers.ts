@@ -14,7 +14,7 @@ export const DOCS = {
   types: 'https://www.postgresql.org/docs/current/datatype.html',
   like: 'https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-LIKE',
   nulls: 'https://www.postgresql.org/docs/current/queries-order.html',
-  auth: 'https://supabase.com/docs/reference/javascript/auth-api',
+  auth: 'https://supabase.com/docs/reference/javascript/auth-signup',
   authErrors: 'https://supabase.com/docs/guides/auth/debugging/error-codes',
   rls: 'https://supabase.com/docs/guides/database/postgres/row-level-security',
 } as const;
