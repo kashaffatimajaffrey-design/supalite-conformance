@@ -47,6 +47,7 @@ jobs:
           npm run typecheck
 
       - name: Start reference (supabase start, only Postgres + PostgREST + GoTrue + Kong)
+        timeout-minutes: 10
         run: |
           supabase start -x studio,storage-api,realtime,edge-runtime,logflare,vector,imgproxy,postgres-meta
           eval "$(supabase status -o env)"

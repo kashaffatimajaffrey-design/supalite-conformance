@@ -6,6 +6,31 @@ Differential conformance tests: the same supabase-js calls against Supabase (Pos
 
 **Report:** https://kashaffatimajaffrey-design.github.io/supalite-conformance/ (published by CI to GitHub Pages)
 
+## Latest results
+
+From [CI run #2](https://github.com/kashaffatimajaffrey-design/supalite-conformance/actions/runs/37117804572) (Lite `bf041d0`, supabase-js 2.117.2, Supabase CLI 2.119.0). 78 cases:
+
+| pass | S1 | S2 | S3 | S4 |
+|---:|---:|---:|---:|---:|
+| 30 | 15 | 12 | 10 | 11 |
+
+The S1 findings (silent wrong data) are the ones that matter most:
+
+| Case | Postgres | Lite |
+|---|---|---|
+| `filters.like.case-sensitive` | `like 'Al%'` → Alice | Alice, alice, ALICE |
+| `filters.ilike.unicode` | `ilike 'émile'` → Émile, émile | émile |
+| `filters.eq.boolean` | `eq('active', true)` → 6 rows | `[]` |
+| `filters.gt.invalid-integer`, `errors.invalid-integer.eq` | 400 `22P02` | 200 `[]` |
+| `ordering.nulls.asc-default` / `desc-default` | NULLs last / first | NULLs first / last |
+| `ordering.text.collation` | alice, Alice, ALICE, … | ALICE, Alice, …, alice |
+| `writes.delete.count` | `count: 2` | `count: null` (rows returned instead) |
+| `rls.anon.insert-denied` | 401 `42501` | 201 `[]` (insert silently dropped) |
+| `rls.user.insert-other-owner` | 403 `42501` | 201 `[]` (insert silently dropped) |
+| `upgrade.*` (4 cases) | rejects `"abc"` in integer, `2024-02-30`, over-length varchar; parses `"yes"` as `true` | stores all of them as-is |
+
+Others: booleans come back as `1`/`0`, timestamps are not normalized, `select=` is ignored on writes (S2); error codes are `QUERY_ERROR` instead of SQLSTATE/PGRST codes, and auth errors carry no `error_code` (S3); upsert, `!inner`, nested embeds, `cs`, full-text search, `->>`, casts, refresh-token grant and writing JS booleans fail loudly (S4). The signUp refresh token is the access token itself (S2). Full per-case detail is on the report page.
+
 ## What it is
 
 A test suite that sends the same supabase-js call to two backends, compares the two answers, and reports every difference.

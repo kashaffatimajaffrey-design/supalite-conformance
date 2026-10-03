@@ -10,7 +10,7 @@ Not affiliated with Supabase.
 |---|---|---|
 | `LIKE` | case-sensitive | case-insensitive for ASCII by default (`PRAGMA case_sensitive_like` is off) |
 | `ILIKE` | folds case using the database locale, including `É`/`é`, `Ü`/`ü` | no `ILIKE`; implementations fall back to `LIKE` or `lower()`, and both fold ASCII only |
-| collation | defined by the database (Supabase: `C.UTF-8`) | `BINARY` (byte order) unless declared |
+| collation | defined by the database; the Supabase image sorts linguistically (`alice, Alice, ALICE, …, émile, Émile`) | `BINARY` (byte order: `ALICE, Alice, …, alice, Émile`) unless declared |
 
 Risk: **S1**. A search box built on `.like()` returns extra rows on Lite. One built on `.ilike()` returns fewer rows for non-English names.
 Cases: `filters.like.*`, `filters.ilike.*`, `ordering.text.collation`.
