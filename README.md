@@ -8,28 +8,7 @@ Differential conformance tests: the same supabase-js calls against Supabase (Pos
 
 ## Latest results
 
-From [CI run #2](https://github.com/kashaffatimajaffrey-design/supalite-conformance/actions/runs/37117804572) (Lite `bf041d0`, supabase-js 2.117.2, Supabase CLI 2.119.0). 78 cases:
-
-| pass | S1 | S2 | S3 | S4 |
-|---:|---:|---:|---:|---:|
-| 30 | 15 | 12 | 10 | 11 |
-
-The S1 findings (silent wrong data) are the ones that matter most:
-
-| Case | Postgres | Lite |
-|---|---|---|
-| `filters.like.case-sensitive` | `like 'Al%'` → Alice | Alice, alice, ALICE |
-| `filters.ilike.unicode` | `ilike 'émile'` → Émile, émile | émile |
-| `filters.eq.boolean` | `eq('active', true)` → 6 rows | `[]` |
-| `filters.gt.invalid-integer`, `errors.invalid-integer.eq` | 400 `22P02` | 200 `[]` |
-| `ordering.nulls.asc-default` / `desc-default` | NULLs last / first | NULLs first / last |
-| `ordering.text.collation` | alice, Alice, ALICE, … | ALICE, Alice, …, alice |
-| `writes.delete.count` | `count: 2` | `count: null` (rows returned instead) |
-| `rls.anon.insert-denied` | 401 `42501` | 201 `[]` (insert silently dropped) |
-| `rls.user.insert-other-owner` | 403 `42501` | 201 `[]` (insert silently dropped) |
-| `upgrade.*` (4 cases) | rejects `"abc"` in integer, `2024-02-30`, over-length varchar; parses `"yes"` as `true` | stores all of them as-is |
-
-Others: booleans come back as `1`/`0`, timestamps are not normalized, `select=` is ignored on writes (S2); error codes are `QUERY_ERROR` instead of SQLSTATE/PGRST codes, and auth errors carry no `error_code` (S3); upsert, `!inner`, nested embeds, `cs`, full-text search, `->>`, casts, refresh-token grant and writing JS booleans fail loudly (S4). The signUp refresh token is the access token itself (S2). Full per-case detail is on the report page.
+The [report](https://kashaffatimajaffrey-design.github.io/supalite-conformance/) always shows the latest run on the default branch, with the versions it tested. Every run is listed under [Actions → conformance](https://github.com/kashaffatimajaffrey-design/supalite-conformance/actions/workflows/conformance.yml), and each run's job summary has the same table.
 
 ## What it is
 
@@ -58,9 +37,10 @@ Lite only works if apps written for Supabase behave the same on it. Lite's own t
 | **S1** wrong data, no error | Worst: the app silently shows wrong results | `like` ignores case, NULLs sort first, `[]` on bad input |
 | **S2** wrong shape or type | Same information, different JSON. Breaks typed apps | booleans as `1`/`0`, timestamps not normalized |
 | **S3** wrong error format | Both fail, with a different status or code. Breaks error handling | `QUERY_ERROR` instead of `42703` |
-| **S4** clearly unsupported | Fails loudly where Postgres works. Acceptable for a lite version | upsert, full-text search |
+| **bug** loud bug | Errors where Postgres works, and the error does not say the feature is unsupported | nested embedding fails with `no such column: posts.id` |
+| **S4** clearly unsupported | Errors and says the feature is unsupported, or Lite's own docs list it as missing. Acceptable for a lite version | full-text search, upsert |
 
-Loud failures (S4) are fine for Lite. Silent wrong data (S1) is what hurts users, so it is ranked first.
+Declared gaps (S4) are fine for Lite. Silent wrong data (S1) is what hurts users, so it is ranked first. A loud bug sits between: the app breaks, and the error does not tell the developer why.
 
 Classification is automatic ([`src/classify.ts`](src/classify.ts)):
 
@@ -68,9 +48,15 @@ Classification is automatic ([`src/classify.ts`](src/classify.ts)):
 - both succeed, with different rows, values or counts → **S1**
 - both succeed with the same information in different JSON (`1` vs `true`, `"4.50"` vs `4.5`, re-spelled timestamps, extra keys, status 200 vs 206) → **S2**
 - both fail, with a different status or code → **S3**
-- the reference succeeds and the target errors or supabase-js throws → **S4**
+- the reference succeeds and the target errors (or supabase-js throws):
+  - the error says the feature is not supported, or the case cites a gap listed in Lite's own docs (`knownGap`) → **S4**
+  - otherwise → **bug**
 
 A few probe cases (for example "is the refresh token distinct from the access token?") set their severity explicitly, because the automatic rules cannot know what a derived fact means.
+
+### Root causes
+
+Many failing cases share one cause (0/1 booleans alone break a filter, a type check and a write). Each case names its cause from [`cases/_rootCauses.ts`](cases/_rootCauses.ts), and the report groups failing cases by cause, so it shows how many distinct problems were found, not just how many cases failed. The attribution was made by reading the pinned Lite source. It is shown only for cases that actually fail, and failing cases without one are counted as "unattributed".
 
 ## Cases
 
@@ -83,8 +69,8 @@ A few probe cases (for example "is the refresh token distinct from the access to
 | 5 | Embedding | [`cases/05-embedding.ts`](cases/05-embedding.ts) | to-one, to-many, nested, alias, `!inner`, filters on embeds |
 | 6 | Writes | [`cases/06-writes.ts`](cases/06-writes.ts) | insert/update/delete + returning, minimal, bulk, count, upsert |
 | 7 | Auth | [`cases/07-auth.ts`](cases/07-auth.ts) | signUp/signIn shape, refresh token, refresh flow, getUser, signOut, error codes |
-| 8 | RLS | [`cases/08-rls.ts`](cases/08-rls.ts) | same policy, same rows for anon vs signed-in; WITH CHECK; USING on update |
-| 9 | Upgrade check | [`cases/09-upgrade.ts`](cases/09-upgrade.ts) | values SQLite stores that Postgres rejects, so data cannot move to Supabase |
+| 8 | RLS | [`cases/08-rls.ts`](cases/08-rls.ts) | same policy, same rows for anon vs signed-in; WITH CHECK, plus a read-back by the owner to check a rejected row was not stored; USING on update |
+| 9 | Upgrade hazards | [`cases/09-upgrade.ts`](cases/09-upgrade.ts) | values Lite accepts that Postgres rejects. Not a full export-to-Postgres migration: each value is written to both backends and Postgres's verdict is compared |
 
 A case looks like this:
 

@@ -21,6 +21,7 @@ defineCase({
 defineCase({
   id: 'embedding.nested',
   category: 'embedding',
+  rootCause: 'nested-embedding-broken',
   why: 'Two levels deep: authors → posts → comments.',
   docs: DOCS.embedding,
   // Comments are not explicitly ordered (see embedding.nested-order). On a freshly
@@ -32,6 +33,7 @@ defineCase({
 defineCase({
   id: 'embedding.nested-order',
   category: 'embedding',
+  rootCause: 'nested-embedding-broken',
   why: 'Ordering a second-level embed with referencedTable "posts.comments".',
   docs: DOCS.ordering,
   run: (sb) =>
@@ -54,6 +56,7 @@ defineCase({
 defineCase({
   id: 'embedding.inner-join',
   category: 'embedding',
+  rootCause: 'inner-hint-misparsed',
   why: '`!inner` drops parents that have no matching children.',
   docs: DOCS.embedding,
   run: (sb) => sb.from('posts').select('id,comments!inner(id)').order('id').order('id', { referencedTable: 'comments' }),
@@ -76,6 +79,7 @@ defineCase({
 defineCase({
   id: 'embedding.inner-filter-parents',
   category: 'embedding',
+  rootCause: 'inner-hint-misparsed',
   why: '`!inner` plus a filter on the embed filters the parent rows.',
   docs: DOCS.embedding,
   run: (sb) => sb.from('posts').select('id,authors!inner(name)').eq('authors.name', 'Grace').order('id'),

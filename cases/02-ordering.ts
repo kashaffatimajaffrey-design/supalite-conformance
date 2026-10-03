@@ -4,6 +4,7 @@ import { DOCS } from './_helpers.ts';
 defineCase({
   id: 'ordering.nulls.asc-default',
   category: 'ordering',
+  rootCause: 'null-ordering',
   why: 'Postgres sorts NULL last for ASC; SQLite sorts NULL first.',
   docs: DOCS.nulls,
   run: (sb) => sb.from('people').select('id,score').order('score', { ascending: true }).order('id'),
@@ -12,6 +13,7 @@ defineCase({
 defineCase({
   id: 'ordering.nulls.desc-default',
   category: 'ordering',
+  rootCause: 'null-ordering',
   why: 'Postgres sorts NULL first for DESC; SQLite sorts NULL last.',
   docs: DOCS.nulls,
   run: (sb) => sb.from('people').select('id,score').order('score', { ascending: false }).order('id'),
@@ -29,6 +31,7 @@ defineCase({
 defineCase({
   id: 'ordering.text.collation',
   category: 'ordering',
+  rootCause: 'binary-collation',
   why: 'Text order depends on collation: mixed case and accented names.',
   docs: DOCS.ordering,
   run: (sb) => sb.from('people').select('name').order('name').order('id'),
@@ -69,6 +72,7 @@ defineCase({
 defineCase({
   id: 'ordering.count.exact-with-range',
   category: 'ordering',
+  rootCause: 'partial-content-status',
   why: 'PostgREST answers a partial page with 206 Partial Content and the total count.',
   docs: DOCS.pagination,
   run: (sb) => sb.from('people').select('id', { count: 'exact' }).gt('score', 4).order('id').range(0, 1),

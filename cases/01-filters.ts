@@ -4,6 +4,7 @@ import { DOCS } from './_helpers.ts';
 defineCase({
   id: 'filters.like.case-sensitive',
   category: 'filters',
+  rootCause: 'like-case-insensitive',
   why: 'Postgres LIKE is case-sensitive; SQLite LIKE ignores ASCII case.',
   docs: DOCS.like,
   run: (sb) => sb.from('people').select('id,name').like('name', 'Al%').order('id'),
@@ -28,6 +29,7 @@ defineCase({
 defineCase({
   id: 'filters.ilike.unicode',
   category: 'filters',
+  rootCause: 'ilike-ascii-only',
   why: 'Postgres ILIKE folds Unicode case (É/é); SQLite only folds plain ASCII.',
   docs: DOCS.like,
   run: (sb) => sb.from('people').select('id,name').ilike('name', 'émile').order('id'),
@@ -92,6 +94,7 @@ defineCase({
 defineCase({
   id: 'filters.eq.boolean',
   category: 'filters',
+  rootCause: 'boolean-as-integer',
   why: 'Filtering a boolean column with `eq.true`; SQLite stores booleans as 0/1.',
   docs: DOCS.operators,
   run: (sb) => sb.from('people').select('id').eq('active', true).order('id'),
@@ -100,6 +103,7 @@ defineCase({
 defineCase({
   id: 'filters.gt.invalid-integer',
   category: 'filters',
+  rootCause: 'no-input-type-validation',
   why: 'Postgres rejects "abc" for an integer column (400, 22P02); SQLite compares it as text.',
   docs: DOCS.pgErrors,
   run: (sb) => sb.from('people').select('id').gt('id', 'abc'),
@@ -108,6 +112,7 @@ defineCase({
 defineCase({
   id: 'filters.contains.jsonb',
   category: 'filters',
+  rootCause: 'json-contains-unsupported',
   why: '`cs` (@>) on a jsonb column; SQLite has no containment operator.',
   docs: DOCS.operators,
   run: (sb) => sb.from('people').select('id').contains('meta', { team: 'red' }).order('id'),
@@ -116,6 +121,7 @@ defineCase({
 defineCase({
   id: 'filters.text-search',
   category: 'filters',
+  rootCause: 'fts-unsupported',
   why: 'Full-text search (`fts`) is Postgres-specific.',
   docs: DOCS.fts,
   knownGap: 'Full-text search is listed as not implemented in Lite docs/api-gap-analysis.md.',

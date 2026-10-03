@@ -10,16 +10,28 @@ const cleanup = (sb: SupabaseClient, ctx: CaseContext) => sb.from('scratch').del
 defineCase({
   id: 'writes.insert.returning',
   category: 'writes',
-  why: 'Insert + select returns the new row with defaults filled in, status 201.',
+  rootCause: 'boolean-as-integer',
+  why: 'Insert + select(*) returns the new row with defaults filled in, status 201.',
   docs: DOCS.writes,
-  run: (sb, ctx) => sb.from('scratch').insert({ label: label(ctx, 'a'), qty: 1 }).select('label,qty,done,due'),
-  ignore: ['data[*].label'],
+  run: (sb, ctx) => sb.from('scratch').insert({ label: label(ctx, 'a'), qty: 1 }).select('*'),
+  ignore: ['data[*].id', 'data[*].label'],
+  teardown: cleanup,
+});
+
+defineCase({
+  id: 'writes.returning.column-projection',
+  category: 'writes',
+  rootCause: 'write-projection-ignored',
+  why: 'select("qty") on an insert returns only that column.',
+  docs: DOCS.writes,
+  run: (sb, ctx) => sb.from('scratch').insert({ label: label(ctx, 'proj'), qty: 7 }).select('qty'),
   teardown: cleanup,
 });
 
 defineCase({
   id: 'writes.insert.minimal',
   category: 'writes',
+  rootCause: 'write-prefer-ignored',
   why: 'Insert without select returns no body (return=minimal), status 201.',
   docs: DOCS.writes,
   run: (sb, ctx) => sb.from('scratch').insert({ label: label(ctx, 'min'), qty: 1 }),
@@ -29,6 +41,7 @@ defineCase({
 defineCase({
   id: 'writes.insert.bulk',
   category: 'writes',
+  rootCause: 'write-projection-ignored',
   why: 'Bulk insert returns all rows in insertion order.',
   docs: DOCS.writes,
   run: (sb, ctx) =>
@@ -46,6 +59,7 @@ defineCase({
 defineCase({
   id: 'writes.insert.generated-id',
   category: 'writes',
+  rootCause: ['write-projection-ignored', 'write-prefer-ignored'],
   why: 'The generated primary key is returned as a JSON number.',
   docs: DOCS.writes,
   run: async (sb, ctx) => {
@@ -58,6 +72,7 @@ defineCase({
 defineCase({
   id: 'writes.update.returning',
   category: 'writes',
+  rootCause: 'write-projection-ignored',
   why: 'Update + select returns the changed rows, status 200.',
   docs: DOCS.writes,
   setup: (sb, ctx) => sb.from('scratch').insert({ label: label(ctx, 'u'), qty: 1 }).throwOnError(),
@@ -68,6 +83,7 @@ defineCase({
 defineCase({
   id: 'writes.boolean-value',
   category: 'writes',
+  rootCause: 'boolean-as-integer',
   why: 'Writing a JSON boolean into a boolean column.',
   docs: DOCS.writes,
   setup: (sb, ctx) => sb.from('scratch').insert({ label: label(ctx, 'bool') }).throwOnError(),
@@ -86,6 +102,7 @@ defineCase({
 defineCase({
   id: 'writes.delete.returning',
   category: 'writes',
+  rootCause: 'write-projection-ignored',
   why: 'Delete + select returns the deleted rows.',
   docs: DOCS.writes,
   setup: (sb, ctx) => sb.from('scratch').insert({ label: label(ctx, 'd'), qty: 9 }).throwOnError(),
@@ -96,6 +113,7 @@ defineCase({
 defineCase({
   id: 'writes.delete.count',
   category: 'writes',
+  rootCause: 'write-prefer-ignored',
   why: "`delete({ count: 'exact' })` reports how many rows were deleted.",
   docs: DOCS.pagination,
   setup: (sb, ctx) =>
@@ -107,6 +125,7 @@ defineCase({
 defineCase({
   id: 'writes.upsert.on-conflict',
   category: 'writes',
+  rootCause: 'upsert-not-implemented',
   why: 'Upsert on a unique column updates the existing row (INSERT ... ON CONFLICT DO UPDATE).',
   docs: DOCS.upsert,
   knownGap: 'Upsert is listed as not implemented in Lite docs/api-gap-analysis.md.',

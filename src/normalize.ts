@@ -21,7 +21,11 @@ export interface Outcome {
   readonly display: Json;
   readonly isError: boolean;
   readonly thrown: boolean;
+  /** The error message says the feature is not supported (e.g. Lite's UnsupportedFeatureError). */
+  readonly declaresUnsupported: boolean;
 }
+
+const UNSUPPORTED = /\bnot (yet )?(supported|implemented)\b|\bunsupported\b|\bonly .+ (is|are) supported\b/i;
 
 const JWT = /^eyJ[\w-]+\.eyJ[\w-]+\.[\w-]*$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -95,12 +99,13 @@ export function normalize(result: unknown, ignore: readonly string[] = []): Outc
     compared = applyIgnore(compared, parsePath(p));
     display = applyIgnore(display, parsePath(p));
   }
-  return { compared, display, isError, thrown: false };
+  const message = isError ? String((result as any)?.error?.message ?? '') : '';
+  return { compared, display, isError, thrown: false, declaresUnsupported: UNSUPPORTED.test(message) };
 }
 
 export function normalizeThrown(e: unknown): Outcome {
   const message = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
-  return { compared: { thrown: true }, display: { thrown: message }, isError: true, thrown: true };
+  return { compared: { thrown: true }, display: { thrown: message }, isError: true, thrown: true, declaresUnsupported: false };
 }
 
 /** `data[*].created_at` → ['data', '*', 'created_at'] */

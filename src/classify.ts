@@ -1,46 +1,67 @@
 /**
- * pass / S1–S4. Deterministic: the verdict depends only on the two normalized outcomes.
+ * pass / S1–S4 / bug. Deterministic: the verdict depends only on the two normalized
+ * outcomes and on whether the case documents a known gap.
  *
- *   S1  wrong data, no error     the app silently shows wrong results (worst)
- *   S2  wrong shape or type      same information, different JSON (breaks typed apps)
- *   S3  wrong error format       both fail, but with a different status or code
- *   S4  clearly unsupported      the target fails loudly where the reference works
+ *   S1   wrong data, no error     the app silently shows wrong results (worst)
+ *   S2   wrong shape or type      same information, different JSON (breaks typed apps)
+ *   S3   wrong error format       both fail, but with a different status or code
+ *   bug  loud bug                 the target errors where the reference works, and the
+ *                                 error does not say the feature is unsupported
+ *   S4   clearly unsupported      the target errors and says the feature is unsupported,
+ *                                 or the target's own docs list it as not implemented
  *
- * Loud failures (S4) are acceptable for a lite version. Silent wrong data (S1) is not.
+ * Declared gaps (S4) are acceptable for a lite version. Silent wrong data (S1) is not.
  */
 import type { Json, Outcome } from './normalize.ts';
 import { diff } from './normalize.ts';
 
-export type Severity = 'S1' | 'S2' | 'S3' | 'S4';
+export type Severity = 'S1' | 'S2' | 'S3' | 'bug' | 'S4';
 export type Verdict = 'pass' | Severity | 'kit-error';
 
+/** In order of harm. */
 export const SEVERITY: Record<Severity, { title: string; meaning: string }> = {
   S1: { title: 'Wrong data, no error', meaning: 'The app silently shows wrong results.' },
   S2: { title: 'Wrong shape or type', meaning: 'Same information, different JSON. Breaks typed apps.' },
   S3: { title: 'Wrong error format', meaning: 'Both fail, with a different status or error code. Breaks error handling.' },
-  S4: { title: 'Clearly unsupported', meaning: 'Fails loudly where Postgres works. Acceptable for a lite version.' },
+  bug: { title: 'Loud bug', meaning: 'Errors where Postgres works, without saying the feature is unsupported.' },
+  S4: { title: 'Clearly unsupported', meaning: 'Errors and says so, or is a documented gap. Acceptable for a lite version.' },
 };
+
+export interface ClassifyOptions {
+  /** Severity the case sets explicitly (probe cases). */
+  readonly severity?: Severity | undefined;
+  /** The case documents this as a gap listed in the target's own docs. */
+  readonly knownGap?: boolean | undefined;
+}
 
 export interface Classification {
   readonly verdict: Verdict;
   readonly reason: string;
 }
 
-export function classify(ref: Outcome, tgt: Outcome, override?: Severity): Classification {
+export function classify(ref: Outcome, tgt: Outcome, opts: ClassifyOptions = {}): Classification {
   if (ref.thrown) return { verdict: 'kit-error', reason: 'The case threw on the reference side; the case itself is broken.' };
   if (diff(ref.compared, tgt.compared).length === 0) return { verdict: 'pass', reason: 'Identical after normalization.' };
 
-  const auto = autoClassify(ref, tgt);
-  if (override) return { verdict: override, reason: `${auto.reason} (severity set by the case)` };
+  const auto = autoClassify(ref, tgt, !!opts.knownGap);
+  if (opts.severity) return { verdict: opts.severity, reason: `${auto.reason} (severity set by the case)` };
   return auto;
 }
 
-function autoClassify(ref: Outcome, tgt: Outcome): { verdict: Severity; reason: string } {
-  if (tgt.thrown) return { verdict: 'S4', reason: 'supabase-js threw on the target.' };
+function autoClassify(ref: Outcome, tgt: Outcome, knownGap: boolean): { verdict: Severity; reason: string } {
+  if (!ref.isError && tgt.isError) {
+    if (tgt.declaresUnsupported) return { verdict: 'S4', reason: 'The reference succeeded; the target said the feature is not supported.' };
+    if (knownGap) return { verdict: 'S4', reason: "The reference succeeded; the target failed on a gap listed in its own docs." };
+    return {
+      verdict: 'bug',
+      reason: tgt.thrown
+        ? 'The reference succeeded; supabase-js threw on the target response.'
+        : 'The reference succeeded; the target returned an error that does not say the feature is unsupported.',
+    };
+  }
   if (ref.isError && tgt.isError) return { verdict: 'S3', reason: 'Both returned an error, with a different status or code.' };
-  if (!ref.isError && tgt.isError) return { verdict: 'S4', reason: 'The reference succeeded; the target returned an error.' };
   if (ref.isError && !tgt.isError)
-    return { verdict: 'S1', reason: 'The reference rejected the request; the target silently accepted it.' };
+    return { verdict: 'S1', reason: 'The reference rejected the request; the target reported success.' };
 
   const r = ref.compared as Record<string, Json>;
   const t = tgt.compared as Record<string, Json>;

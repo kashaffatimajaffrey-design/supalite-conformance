@@ -57,16 +57,20 @@ test('both error with different codes is S3', () => {
   assert.equal(classify(normalize(pgErr(400, '42703')), normalize(pgErr(400, 'QUERY_ERROR'))).verdict, 'S3');
 });
 
-test('reference ok, target error is S4; target throw is S4; reference throw is a kit error', () => {
-  assert.equal(classify(normalize(pg([])), normalize(pgErr(400, 'QUERY_ERROR'))).verdict, 'S4');
-  assert.equal(classify(normalize(pg([])), normalizeThrown(new Error('boom'))).verdict, 'S4');
+test('reference ok, target error: S4 only when declared unsupported or a documented gap, else bug', () => {
+  const unsupported = { ...pgErr(400, 'QUERY_ERROR'), error: { code: 'QUERY_ERROR', message: "Feature 'X' is not supported in PostgREST-Lite" } };
+  const raw = { ...pgErr(400, 'QUERY_ERROR'), error: { code: 'QUERY_ERROR', message: 'no such column: posts.id' } };
+  assert.equal(classify(normalize(pg([])), normalize(unsupported)).verdict, 'S4');
+  assert.equal(classify(normalize(pg([])), normalize(raw)).verdict, 'bug');
+  assert.equal(classify(normalize(pg([])), normalize(raw), { knownGap: true }).verdict, 'S4');
+  assert.equal(classify(normalize(pg([])), normalizeThrown(new Error('boom'))).verdict, 'bug');
   assert.equal(classify(normalizeThrown(new Error('boom')), normalize(pg([]))).verdict, 'kit-error');
 });
 
 test('case severity override applies only when the sides differ', () => {
   const a = normalize({ refresh: true });
-  assert.equal(classify(a, normalize({ refresh: false }), 'S2').verdict, 'S2');
-  assert.equal(classify(a, normalize({ refresh: true }), 'S2').verdict, 'pass');
+  assert.equal(classify(a, normalize({ refresh: false }), { severity: 'S2' }).verdict, 'S2');
+  assert.equal(classify(a, normalize({ refresh: true }), { severity: 'S2' }).verdict, 'pass');
 });
 
 test('JWTs and non-seed uuids are redacted; seed uuids are kept', () => {

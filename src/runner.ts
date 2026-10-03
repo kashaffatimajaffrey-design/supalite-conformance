@@ -15,6 +15,7 @@ import { loadTargets, type Target } from '../targets/config.ts';
 import { registeredCases, type Case, type CaseContext } from './defineCase.ts';
 import { diff, normalize, normalizeThrown, type Difference, type Json, type Outcome } from './normalize.ts';
 import { classify, SEVERITY, type Severity, type Verdict } from './classify.ts';
+import { ROOT_CAUSES, type RootCause } from '../cases/_rootCauses.ts';
 
 const root = (p: string) => fileURLToPath(new URL(`../${p}`, import.meta.url));
 const CALL_TIMEOUT_MS = 20_000;
@@ -25,6 +26,7 @@ export interface CaseResult {
   why: string;
   docs?: string;
   knownGap?: string;
+  rootCauses: string[];
   verdict: Verdict;
   reason: string;
   differences: Difference[];
@@ -41,8 +43,11 @@ export interface Results {
     reference: { label: string; url: string } | null;
     target: { label: string; url: string };
     versions: Record<string, string>;
+    rootCauses: Record<string, RootCause>;
   };
   totals: Record<Verdict | 'unverified', number>;
+  /** Distinct root causes among failing cases, and failing cases with none attributed. */
+  rootCauseTotals: { distinct: number; unattributed: number; failing: number };
   cases: (CaseResult | (Omit<CaseResult, 'verdict'> & { verdict: 'unverified' }))[];
 }
 
@@ -125,7 +130,8 @@ function versions(): Record<string, string> {
   };
 }
 
-const ICON: Record<string, string> = { pass: 'PASS', S1: 'S1  ', S2: 'S2  ', S3: 'S3  ', S4: 'S4  ', 'kit-error': 'KIT!', unverified: '----' };
+const ICON: Record<string, string> = { pass: 'PASS', S1: 'S1  ', S2: 'S2  ', S3: 'S3  ', bug: 'BUG ', S4: 'S4  ', 'kit-error': 'KIT!', unverified: '----' };
+const isFailing = (v: string) => v !== 'pass' && v !== 'unverified';
 
 async function main() {
   const { reference, target } = loadTargets();
@@ -153,6 +159,7 @@ async function main() {
       why: c.why,
       ...(c.docs ? { docs: c.docs } : {}),
       ...(c.knownGap ? { knownGap: c.knownGap } : {}),
+      rootCauses: c.rootCause === undefined ? [] : ([] as string[]).concat(c.rootCause),
       reference: r?.outcome.display ?? null,
       target: t.outcome.display,
       ms: { reference: r?.ms ?? null, target: t.ms },
@@ -162,7 +169,7 @@ async function main() {
       console.log(`${ICON.unverified}  ${c.id}`);
       continue;
     }
-    const { verdict, reason } = classify(r.outcome, t.outcome, c.severity);
+    const { verdict, reason } = classify(r.outcome, t.outcome, { severity: c.severity, knownGap: !!c.knownGap });
     const differences = diff(r.outcome.compared, t.outcome.compared);
     results.push({ ...base, verdict, reason, differences });
     const first = differences[0];
@@ -170,8 +177,15 @@ async function main() {
     console.log(`${ICON[verdict]}  ${c.id.padEnd(48)}${hint}`);
   }
 
-  const totals = { pass: 0, S1: 0, S2: 0, S3: 0, S4: 0, 'kit-error': 0, unverified: 0 } as Results['totals'];
+  const totals = { pass: 0, S1: 0, S2: 0, S3: 0, bug: 0, S4: 0, 'kit-error': 0, unverified: 0 } as Results['totals'];
   for (const r of results) totals[r.verdict]++;
+  const failing = results.filter((r) => isFailing(r.verdict));
+  const causes = new Set(failing.flatMap((r) => r.rootCauses));
+  const rootCauseTotals = {
+    distinct: causes.size,
+    unattributed: failing.filter((r) => r.rootCauses.length === 0).length,
+    failing: failing.length,
+  };
 
   const out: Results = {
     meta: {
@@ -181,8 +195,10 @@ async function main() {
       reference: ref ? { label: ref.label, url: ref.url } : null,
       target: { label: target.label, url: target.url },
       versions: versions(),
+      rootCauses: Object.fromEntries([...causes].sort().map((id) => [id, (ROOT_CAUSES as Record<string, RootCause>)[id]!])),
     },
     totals,
+    rootCauseTotals,
     cases: results,
   };
   const dir = arg('out') ?? root('results');
@@ -191,14 +207,21 @@ async function main() {
   writeFileSync(`${dir}/summary.md`, summaryMarkdown(out));
 
   console.log(
-    `\n${results.length} cases: ${totals.pass} pass, ${totals.S1} S1, ${totals.S2} S2, ${totals.S3} S3, ${totals.S4} S4` +
+    `\n${results.length} cases: ${totals.pass} pass, ${totals.S1} S1, ${totals.S2} S2, ${totals.S3} S3, ${totals.bug} bug, ${totals.S4} S4` +
       (totals['kit-error'] ? `, ${totals['kit-error']} kit errors` : '') +
       (totals.unverified ? `, ${totals.unverified} unverified` : ''),
   );
+  if (failing.length) {
+    console.log(
+      `${failing.length} failing cases trace to ${rootCauseTotals.distinct} distinct root causes` +
+        (rootCauseTotals.unattributed ? ` (+${rootCauseTotals.unattributed} failing cases unattributed)` : ''),
+    );
+  }
   console.log(`wrote ${dir}/results.json`);
 
   const failOn = arg('fail-on') as Severity | undefined;
-  const failed = failOn && (['S1', 'S2', 'S3', 'S4'] as const).slice(0, Number(failOn.slice(1))).some((s) => totals[s] > 0);
+  const order = ['S1', 'S2', 'S3', 'bug', 'S4'] as const;
+  const failed = failOn && order.slice(0, order.indexOf(failOn) + 1).some((s) => totals[s] > 0);
   process.exit(totals['kit-error'] > 0 || failed ? 1 : 0);
 }
 
@@ -217,10 +240,23 @@ export function summaryMarkdown(r: Results): string {
     '| Verdict | Meaning | Cases |',
     '|---|---|---:|',
     `| pass | identical after normalization | ${t.pass} |`,
-    ...(['S1', 'S2', 'S3', 'S4'] as const).map((s) => `| ${s} | ${SEVERITY[s].title} | ${t[s]} |`),
+    ...(['S1', 'S2', 'S3', 'bug', 'S4'] as const).map((s) => `| ${s} | ${SEVERITY[s].title} | ${t[s]} |`),
     ...(t['kit-error'] ? [`| kit-error | case broken on the reference side | ${t['kit-error']} |`] : []),
     ...(t.unverified ? [`| unverified | no reference run | ${t.unverified} |`] : []),
     '',
+    ...(r.rootCauseTotals.failing
+      ? [
+          `**${r.rootCauseTotals.failing} failing cases trace to ${r.rootCauseTotals.distinct} distinct root causes**` +
+            (r.rootCauseTotals.unattributed ? ` (${r.rootCauseTotals.unattributed} failing cases unattributed).` : '.'),
+          '',
+          '| Root cause | Cases |',
+          '|---|---|',
+          ...Object.entries(r.meta.rootCauses).map(
+            ([id, rc]) => `| ${rc.title} | ${r.cases.filter((c) => isFailing(c.verdict) && c.rootCauses.includes(id)).map((c) => `\`${c.id}\` (${c.verdict})`).join(', ')} |`,
+          ),
+          '',
+        ]
+      : []),
     '| Case | Verdict | First difference |',
     '|---|---|---|',
     ...r.cases

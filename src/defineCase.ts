@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Severity } from './classify.ts';
+import type { RootCauseId } from '../cases/_rootCauses.ts';
 
 export type Category =
   | 'filters'
@@ -45,6 +46,11 @@ export interface Case {
    * rules cannot know what the difference means. Omit to classify automatically.
    */
   readonly severity?: Severity;
+  /**
+   * Why the pinned target fails this case (ids from cases/_rootCauses.ts). Lets the
+   * report count distinct problems instead of failing cases. Shown only when failing.
+   */
+  readonly rootCause?: RootCauseId | readonly RootCauseId[];
   /** Documented upstream gap (e.g. on Lite's own "not implemented" list). Shown in the report. */
   readonly knownGap?: string;
 }

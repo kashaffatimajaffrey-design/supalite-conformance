@@ -28,7 +28,7 @@ SQLite has five storage classes (NULL, INTEGER, REAL, TEXT, BLOB) and *type affi
 
 | Postgres type | What SQLite stores | Visible effect |
 |---|---|---|
-| `boolean` | INTEGER 0/1 | JSON `1`/`0` instead of `true`/`false` (**S2**); `eq.true` matches no rows (**S1**); writing a JS boolean fails to bind (**S4**) |
+| `boolean` | INTEGER 0/1 | JSON `1`/`0` instead of `true`/`false` (**S2**); `eq.true` matches no rows (**S1**); writing a JS boolean fails to bind (**bug**) |
 | `timestamptz` | TEXT as written | no normalization to UTC ISO 8601: `2024-01-15T15:30:00+05:00` comes back as written, not as `2024-01-15T10:30:00+00:00` (**S2**); sorting the text across time zones can give the wrong order |
 | `numeric(p,s)` | INTEGER or REAL | scale is lost; values beyond 2^53 lose precision |
 | `jsonb` | TEXT | needs parsing on read; no `@>`, `->`, `->>` operators unless emulated with `json_extract` |
@@ -60,8 +60,11 @@ Cases: `writes.*`, `ordering.count.exact-with-range`.
 
 ## 7. Row Level Security
 
-Postgres enforces RLS inside the database for every statement. A `WITH CHECK` failure is an error (`42501`, HTTP 403 for a signed-in user, 401 for anon). SQLite has no RLS, so it must be emulated in the API layer by rewriting queries. The dangerous failure mode is a write that violates `WITH CHECK` and is silently dropped (`201` with `[]`) instead of rejected.
+Postgres enforces RLS inside the database for every statement. A `WITH CHECK` failure is an error (`42501`, HTTP 403 for a signed-in user, 401 for anon). SQLite has no RLS, so it must be emulated in the API layer.
 
+Lite at `bf041d0` emulates `WITH CHECK` after the fact (`src/rls/ast-enforcer.ts`, `validateWithCheck`): it inserts the rows, checks each one against the policy, deletes the ones that fail, and answers `201` with the rows that passed. A violating insert therefore gets `201 []`. The kit reads the row back as its rightful owner (`*.not-stored` cases) to check that it was not kept. The design has side effects of its own: the row exists briefly, uses up an id and fires constraints and triggers. If the policy check itself errors, the row is kept.
+
+Risk: **S1**. The app is told a forbidden write succeeded.
 Cases: `rls.*`.
 
 ## 8. Auth (GoTrue)
@@ -70,8 +73,8 @@ GoTrue issues a short opaque refresh token next to a JWT access token, rotates i
 
 Cases: `auth.*`.
 
-## 9. The upgrade path
+## 9. Upgrade hazards
 
-Lite's promise is an upgrade path to full Supabase. Anything SQLite accepted that Postgres rejects blocks that path: text in integer columns, impossible dates, over-length varchar, free-form booleans. The kit writes such values to both backends. Postgres refuses them; if Lite stores them, the case is **S1**, because the data will not migrate.
+Lite's promise is an upgrade path to full Supabase. Anything SQLite accepted that Postgres rejects blocks that path: text in integer columns, impossible dates, over-length varchar, free-form booleans. The kit writes such values to both backends and compares. Postgres refuses them; if Lite stores them, the case is **S1**, because the data will not migrate. This is not a full export-and-import migration test; it checks values one at a time.
 
 Cases: `upgrade.*`.

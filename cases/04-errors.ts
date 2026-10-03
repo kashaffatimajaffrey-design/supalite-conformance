@@ -28,6 +28,7 @@ defineCase({
 defineCase({
   id: 'errors.unknown-column.select',
   category: 'errors',
+  rootCause: 'error-codes-not-mapped',
   why: 'Selecting a missing column: 400 with Postgres code 42703.',
   docs: DOCS.errors,
   run: (sb) => sb.from('people').select('nope'),
@@ -36,6 +37,7 @@ defineCase({
 defineCase({
   id: 'errors.unknown-column.filter',
   category: 'errors',
+  rootCause: 'error-codes-not-mapped',
   why: 'Filtering on a missing column: 400 with Postgres code 42703.',
   docs: DOCS.errors,
   run: (sb) => sb.from('people').select('id').eq('nope', 1),
@@ -44,6 +46,7 @@ defineCase({
 defineCase({
   id: 'errors.unknown-table',
   category: 'errors',
+  rootCause: 'error-codes-not-mapped',
   why: 'A missing table: 404 with PostgREST code PGRST205.',
   docs: DOCS.errors,
   run: (sb) => sb.from('nope').select('*'),
@@ -52,6 +55,7 @@ defineCase({
 defineCase({
   id: 'errors.invalid-integer.eq',
   category: 'errors',
+  rootCause: 'no-input-type-validation',
   why: 'eq on an integer column with a non-integer: 400, 22P02.',
   docs: DOCS.pgErrors,
   run: (sb) => sb.from('people').select('id').eq('id', 'abc'),
@@ -60,6 +64,7 @@ defineCase({
 defineCase({
   id: 'errors.malformed-or',
   category: 'errors',
+  rootCause: 'error-codes-not-mapped',
   why: 'An `or` filter the parser cannot read: 400, PGRST100.',
   docs: DOCS.errors,
   run: (sb) => sb.from('people').select('id').or('id.eq'),
@@ -68,6 +73,7 @@ defineCase({
 defineCase({
   id: 'errors.not-null-violation',
   category: 'errors',
+  rootCause: 'error-codes-not-mapped',
   why: 'Inserting without a NOT NULL column: 400, 23502.',
   docs: DOCS.pgErrors,
   run: (sb) => sb.from('scratch').insert({ qty: 1 }),
@@ -76,6 +82,7 @@ defineCase({
 defineCase({
   id: 'errors.unique-violation',
   category: 'errors',
+  rootCause: 'error-codes-not-mapped',
   why: 'Inserting a duplicate into a UNIQUE column: 409 Conflict, 23505.',
   docs: DOCS.pgErrors,
   setup: (sb, ctx) => sb.from('scratch').insert({ label: `${ctx.runId}-dup` }).throwOnError(),

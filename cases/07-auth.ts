@@ -6,6 +6,7 @@ const JWT = /^eyJ[\w-]+\.eyJ[\w-]+\.[\w-]+$/;
 defineCase({
   id: 'auth.signup.session-shape',
   category: 'auth',
+  rootCause: 'gotrue-user-shape',
   why: 'signUp returns a session and a user with the GoTrue field set.',
   docs: DOCS.auth,
   severity: 'S2', // a shape comparison: any difference is a shape difference
@@ -18,6 +19,7 @@ defineCase({
 defineCase({
   id: 'auth.signup.refresh-token',
   category: 'auth',
+  rootCause: 'no-refresh-tokens',
   why: 'GoTrue issues a separate, opaque refresh token; it is never the access token.',
   docs: DOCS.auth,
   severity: 'S2',
@@ -38,6 +40,7 @@ defineCase({
 defineCase({
   id: 'auth.signup.duplicate-email',
   category: 'auth',
+  rootCause: 'gotrue-error-format',
   why: 'Signing up an existing email (confirmations off): 422, user_already_exists.',
   docs: DOCS.authErrors,
   run: async (sb) => {
@@ -49,6 +52,7 @@ defineCase({
 defineCase({
   id: 'auth.signup.weak-password',
   category: 'auth',
+  rootCause: 'gotrue-error-format',
   why: 'A password below the minimum length: 422, weak_password.',
   docs: DOCS.authErrors,
   run: async (sb, ctx) => {
@@ -81,6 +85,7 @@ defineCase({
 defineCase({
   id: 'auth.signin.wrong-password',
   category: 'auth',
+  rootCause: 'gotrue-error-format',
   why: 'Wrong password: 400, invalid_credentials.',
   docs: DOCS.authErrors,
   run: async (sb) => {
@@ -92,6 +97,7 @@ defineCase({
 defineCase({
   id: 'auth.refresh-session',
   category: 'auth',
+  rootCause: 'no-refresh-tokens',
   why: 'Exchanging the refresh token for a new session (grant_type=refresh_token).',
   docs: DOCS.auth,
   run: async (sb) => {
@@ -117,6 +123,7 @@ defineCase({
 defineCase({
   id: 'auth.signout.revokes-session',
   category: 'auth',
+  rootCause: 'gotrue-error-format',
   why: 'After signOut(), the old access token no longer gets a user (session revoked).',
   docs: DOCS.auth,
   run: async (sb, ctx) => {

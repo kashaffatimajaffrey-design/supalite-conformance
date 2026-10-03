@@ -4,6 +4,7 @@ import { DOCS } from './_helpers.ts';
 defineCase({
   id: 'types.boolean',
   category: 'types',
+  rootCause: 'boolean-as-integer',
   why: 'Postgres returns JSON true/false; SQLite stores 1/0.',
   docs: DOCS.types,
   run: (sb) => sb.from('people').select('id,active').in('id', [1, 2]).order('id'),
@@ -12,6 +13,7 @@ defineCase({
 defineCase({
   id: 'types.timestamptz.format',
   category: 'types',
+  rootCause: 'timestamps-not-normalized',
   why: 'Postgres normalizes timestamptz to ISO 8601 in UTC; SQLite returns the text as inserted.',
   docs: DOCS.types,
   run: (sb) => sb.from('people').select('id,created_at').in('id', [1, 2, 3, 4, 5, 7]).order('id'),
@@ -44,6 +46,7 @@ defineCase({
 defineCase({
   id: 'types.jsonb.arrow-text',
   category: 'types',
+  rootCause: 'json-path-select',
   why: '`meta->>team` extracts a JSON field as text.',
   docs: DOCS.json,
   run: (sb) => sb.from('people').select('id,team:meta->>team').in('id', [1, 3, 4]).order('id'),
@@ -52,6 +55,7 @@ defineCase({
 defineCase({
   id: 'types.cast',
   category: 'types',
+  rootCause: 'select-casts',
   why: 'PostgREST supports `col::type` casts in select.',
   docs: 'https://docs.postgrest.org/en/stable/references/api/tables_views.html#casting-columns',
   run: (sb) => sb.from('people').select('id,score::text').in('id', [1, 2]).order('id'),

@@ -21,6 +21,7 @@ function writeAndRead(row: Record<string, unknown>, column: string) {
 defineCase({
   id: 'upgrade.text-in-integer-column',
   category: 'upgrade',
+  rootCause: 'no-input-type-validation',
   why: 'SQLite type affinity stores "abc" in an INTEGER column; Postgres rejects it (22P02).',
   docs: DOCS.pgErrors,
   run: writeAndRead({ qty: 'abc' }, 'qty'),
@@ -30,6 +31,7 @@ defineCase({
 defineCase({
   id: 'upgrade.impossible-date',
   category: 'upgrade',
+  rootCause: 'no-input-type-validation',
   why: 'SQLite stores "2024-02-30" as text; Postgres rejects it (22008).',
   docs: DOCS.pgErrors,
   run: writeAndRead({ due: '2024-02-30' }, 'due'),
@@ -39,6 +41,7 @@ defineCase({
 defineCase({
   id: 'upgrade.varchar-overflow',
   category: 'upgrade',
+  rootCause: 'no-input-type-validation',
   why: 'SQLite ignores VARCHAR(5) length; Postgres rejects longer values (22001).',
   docs: DOCS.pgErrors,
   run: writeAndRead({ code: 'TOO-LONG' }, 'code'),
@@ -48,6 +51,7 @@ defineCase({
 defineCase({
   id: 'upgrade.boolean-from-text',
   category: 'upgrade',
+  rootCause: 'no-input-type-validation',
   why: 'Postgres parses "yes" into boolean true; SQLite stores the string "yes" in a BOOLEAN column.',
   docs: DOCS.types,
   run: writeAndRead({ done: 'yes' }, 'done'),
