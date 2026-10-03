@@ -12,7 +12,7 @@ By Kashaf Fatima · [GitHub](https://github.com/kashaffatimajaffrey-design) · [
 
 The [report](https://kashaffatimajaffrey-design.github.io/supalite-conformance/) always shows the latest run on the default branch, with the versions it tested. Every run is listed under [Actions → conformance](https://github.com/kashaffatimajaffrey-design/supalite-conformance/actions/workflows/conformance.yml), and each run's job summary has the same table.
 
-Snapshot from [CI run #6](https://github.com/kashaffatimajaffrey-design/supalite-conformance/actions/runs/37119461161) (Lite `bf041d0`, supabase-js 2.117.2, Supabase CLI 2.119.0), 81 cases:
+Snapshot from [CI run #11](https://github.com/kashaffatimajaffrey-design/supalite-conformance/actions/runs/37124415012) (Lite `bf041d0`, supabase-js 2.117.2, Supabase CLI 2.119.0), 81 cases:
 
 | pass | S1 | S2 | S3 | bug | S4 |
 |---:|---:|---:|---:|---:|---:|
